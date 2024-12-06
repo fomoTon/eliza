@@ -11,6 +11,9 @@ app.use(express.json());
 const agentManager = new AgentManager();
 agentManager.initialize();
 
+const AGENT_SERVER_PORT = 3000;
+const EXPRESS_SERVER_PORT = 8000;
+
 // API Routes
 app.post('/agents', async (req, res) => {
     try {
@@ -26,6 +29,28 @@ app.post('/agents', async (req, res) => {
         } else {
             res.status(400).json({ error: 'An unknown error occurred' });
         }
+    }
+});
+
+app.post('/chat', async (req, res) => {
+    try {
+      const { message, agentId, userId, userName } = req.body;
+
+      const response = await fetch(`http://localhost:${AGENT_SERVER_PORT}/${agentId}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: message,
+          userId,
+          userName
+        })
+      });
+
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ error: 'Failed to process request' });
     }
 });
 
@@ -68,6 +93,6 @@ app.get('/agents/:id', async (req, res) => {
     // }
 });
 
-app.listen(8555, () => {
-    console.log('Server running on port 8555');
-});
+app.listen(EXPRESS_SERVER_PORT, () => {
+    console.log(`Express server running on port ${EXPRESS_SERVER_PORT}`);
+  });

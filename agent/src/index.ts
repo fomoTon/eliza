@@ -359,7 +359,6 @@ export function createAgent(
         databaseAdapter: db,
         token,
         modelProvider: character.modelProvider,
-        serverUrl:"http://localhost:3000",
         evaluators: [],
         character,
         plugins: [
@@ -505,7 +504,7 @@ async function handleUserInput(input, agentId) {
     }
 
     try {
-        const serverPort = parseInt("3000");
+        const serverPort = parseInt(settings.SERVER_PORT || "3000");
 
         const response = await fetch(
             `http://localhost:${serverPort}/${agentId}/message`,
