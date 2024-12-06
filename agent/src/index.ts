@@ -359,6 +359,7 @@ export function createAgent(
         databaseAdapter: db,
         token,
         modelProvider: character.modelProvider,
+        serverUrl:"http://localhost:3000",
         evaluators: [],
         character,
         plugins: [
@@ -455,6 +456,7 @@ async function startAgent(character: Character, directClient) {
 }
 
 const startAgents = async () => {
+    console.log("starting agents")
     const directClient = await DirectClientInterface.start();
     const args = parseArguments();
 
@@ -463,12 +465,14 @@ const startAgents = async () => {
     let characters = [defaultCharacter];
 
     if (charactersArg) {
+        console.log("if charactersArg")
         characters = await loadCharacters(charactersArg);
     }
 
     try {
         for (const character of characters) {
-            await startAgent(character, directClient);
+            console.log("startAgent")
+            //await startAgent(character, directClient);
         }
     } catch (error) {
         elizaLogger.error("Error starting agents:", error);
@@ -504,7 +508,7 @@ async function handleUserInput(input, agentId) {
     }
 
     try {
-        const serverPort = parseInt(settings.SERVER_PORT || "3000");
+        const serverPort = parseInt("3000");
 
         const response = await fetch(
             `http://localhost:${serverPort}/${agentId}/message`,
