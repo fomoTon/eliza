@@ -28,6 +28,15 @@ const EXPRESS_SERVER_PORT = 8000;
 // 4) The default port for the agents to run on is 3000 but the default for AgentRuntime.serverUrl = "http://localhost:7998"
 //    AgentRuntime.serverUrl is the base URL of the server where the agent's requests are processed.
 //    Should I be sending my chat requests there?
+//
+// 5) Should we just assign each agent a different port, and if we are close to running out we just deploy another instance?
+//
+// 6) TODO: import agent-twitter-client to grab twitter cookies and store secrets in config file directly
+//
+// 7) Sol wallet broken for some reason despite passing env vars.
+//    Would be good to comment out this sevice for now so it doesnt throw errs.
+//
+
 
 app.post('/agents', async (req, res) => {
     try {
