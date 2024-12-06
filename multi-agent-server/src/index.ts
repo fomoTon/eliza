@@ -14,7 +14,21 @@ agentManager.initialize();
 const AGENT_SERVER_PORT = 3000;
 const EXPRESS_SERVER_PORT = 8000;
 
-// API Routes
+// Notes:
+// 1) If you start this server with no agents it will trigger the default charecter to load.
+//    This is fine but was confusing the first time I saw it.
+//
+// 2) The agentId and userId seem to be being set automatically with the caht endpoint.
+//    These are not the same as the values in the body of your post request
+//
+// 3) The logs suggest that chat messages are received by the agent server
+//    but it is not clear that they are being understood as I don't see any response generated.
+//    Its also not clear that the endpoint I am hitting is expected to return a message in the response.
+//
+// 4) The default port for the agents to run on is 3000 but the default for AgentRuntime.serverUrl = "http://localhost:7998"
+//    AgentRuntime.serverUrl is the base URL of the server where the agent's requests are processed.
+//    Should I be sending my chat requests there?
+
 app.post('/agents', async (req, res) => {
     try {
         const { id, config } = req.body;

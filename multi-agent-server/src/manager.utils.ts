@@ -6,7 +6,7 @@ export const createCharacterConfig = async(config: AgentConfig) => {
     const modelProvider = config.isNsfw? "dolphin_2_9_1_llama_3_70B" : "openai"
     const plugins: string[] = []
     const settings = {
-      "secrets": {},
+      "secrets": {}, // TODO: Use secrets to hold agent specific keys. Get twitter env and past here. Test on sample charecter files.
       "voice": {
           "model": config.voice as string
       }
