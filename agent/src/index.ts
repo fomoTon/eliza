@@ -456,7 +456,6 @@ async function startAgent(character: Character, directClient) {
 }
 
 const startAgents = async () => {
-    console.log("starting agents")
     const directClient = await DirectClientInterface.start();
     const args = parseArguments();
 
@@ -465,14 +464,12 @@ const startAgents = async () => {
     let characters = [defaultCharacter];
 
     if (charactersArg) {
-        console.log("if charactersArg")
         characters = await loadCharacters(charactersArg);
     }
 
     try {
         for (const character of characters) {
-            console.log("startAgent")
-            //await startAgent(character, directClient);
+            await startAgent(character, directClient);
         }
     } catch (error) {
         elizaLogger.error("Error starting agents:", error);
