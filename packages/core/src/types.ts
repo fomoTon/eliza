@@ -730,6 +730,9 @@ export type Character = {
         bio: string;
         nicknames?: string[];
     };
+
+    /** Art themes */
+    artThemes?: string[];
 };
 
 /**

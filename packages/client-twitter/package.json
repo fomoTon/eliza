@@ -6,6 +6,8 @@
     "types": "dist/index.d.ts",
     "dependencies": {
         "@ai16z/eliza": "workspace:*",
+        "@ai16z/plugin-video-generation": "workspace:*",
+        "@ai16z/plugin-image-generation": "workspace:*",
         "agent-twitter-client": "0.0.16",
         "glob": "11.0.0",
         "zod": "3.23.8"

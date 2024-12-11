@@ -98,7 +98,8 @@ export class TwitterInteractionClient {
                 ) * 1000 // Default to 2 minutes
             );
         };
-        handleTwitterInteractionsLoop();
+        // delay by 30 minutes
+        setTimeout(handleTwitterInteractionsLoop, 1800000);
     }
 
     async handleTwitterInteractions() {

@@ -12,7 +12,6 @@ import { Buffer } from "buffer";
 import { createOllama } from "ollama-ai-provider";
 import OpenAI from "openai";
 import { encodingForModel, TiktokenModel } from "js-tiktoken";
-import Together from "together-ai";
 import { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
 import { getModel, models } from "./models.ts";
@@ -873,34 +872,35 @@ export const generateImage = async (
             // for backwards compat
             runtime.imageModelProvider === ModelProviderName.LLAMACLOUD
         ) {
-            const together = new Together({ apiKey: apiKey as string });
-            // Fix: steps 4 is for schnell; 28 is for dev.
-            const response = await together.images.create({
-                model: "black-forest-labs/FLUX.1-schnell",
-                prompt: data.prompt,
-                width: data.width,
-                height: data.height,
-                steps: modelSettings?.steps ?? 4,
-                n: data.count,
+            console.log("Using Together API...");
+            data.prompt = trimTokens(data.prompt, 1000, "gpt-4o-mini");
+
+            const client = new OpenAI({
+                apiKey: runtime.getSetting("TOGETHER_API_KEY"),
+                baseURL: "https://api.together.xyz/v1",
             });
-            const urls: string[] = [];
-            for (let i = 0; i < response.data.length; i++) {
-                const json = response.data[i].b64_json;
-                // decode base64
-                const base64 = Buffer.from(json, "base64").toString("base64");
-                urls.push(base64);
+
+            try {
+                const response = await client.images.generate({
+                    prompt: data.prompt,
+                    model: "black-forest-labs/FLUX.1-schnell",
+                    n: 1,
+                });
+
+                if (response && response.data && response.data[0].url) {
+                    const imageUrl = response.data[0].url;
+                    // return base64 string
+                    const imageResponse = await fetch(imageUrl);
+                    const imageBuffer = await imageResponse.arrayBuffer();
+                    const base64 = Buffer.from(imageBuffer).toString("base64");
+                    return { success: true, data: [base64] };
+                } else {
+                   throw new Error("No image URL returned from Together API.");
+                }
+            } catch (error) {
+                console.error("Error generating image with Together API:", error);
+                return { success: false, error: error };
             }
-            const base64s = await Promise.all(
-                urls.map(async (url) => {
-                    const response = await fetch(url);
-                    const blob = await response.blob();
-                    const buffer = await blob.arrayBuffer();
-                    let base64 = Buffer.from(buffer).toString("base64");
-                    base64 = "data:image/jpeg;base64," + base64;
-                    return base64;
-                })
-            );
-            return { success: true, data: base64s };
         } else if (runtime.imageModelProvider === ModelProviderName.FAL) {
             fal.config({
                 credentials: apiKey as string,
@@ -975,6 +975,82 @@ export const generateImage = async (
     } catch (error) {
         console.error(error);
         return { success: false, error: error };
+    }
+};
+
+export const generateVideo = async (
+    data: {
+        prompt: string,
+        duration?: number,
+        resolution?: string
+    },
+    runtime: IAgentRuntime
+) => {
+    const LUMA_API_KEY = runtime.getSetting("LUMA_API_KEY");
+    elizaLogger.log("Starting video generation with Luma API");
+
+    try {
+        // Create initial generation request
+        elizaLogger.log("Sending request to Luma API...");
+        const generationResponse = await fetch("https://api.lumalabs.ai/dream-machine/v1/generations", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${LUMA_API_KEY}`,
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify({
+                prompt: data.prompt,
+                aspect_ratio: "4:3",
+                loop: false
+            })
+        });
+
+        const generationData = await generationResponse.json();
+        elizaLogger.log("Initial generation response:", generationData);
+
+        if (!generationData.id) {
+            throw new Error(`Failed to get generation ID: ${JSON.stringify(generationData)}`);
+        }
+
+        // Poll for completion
+        let attempts = 0;
+        const maxAttempts = 60; // 5 minutes with 5-second intervals
+
+        while (attempts < maxAttempts) {
+            const statusResponse = await fetch(
+                `https://api.lumalabs.ai/dream-machine/v1/generations/${generationData.id}`, {
+                    headers: {
+                        "Authorization": `Bearer ${LUMA_API_KEY}`,
+                        "Accept": "application/json"
+                    }
+                }
+            );
+
+            const statusData = await statusResponse.json();
+            elizaLogger.log("Status check response:", statusData);
+
+            if (statusData.state === "completed" && statusData.assets?.video) {
+                return {
+                    success: true,
+                    url: statusData.assets.video
+                };
+            } else if (statusData.state === "failed") {
+                throw new Error("Video generation failed");
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            attempts++;
+        }
+
+        throw new Error("Video generation timed out");
+    } catch (error) {
+        elizaLogger.error("Error generating video:", error);
+        return {
+            url: null,
+            success: false,
+            error
+        };
     }
 };
 

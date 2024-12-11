@@ -1,6 +1,7 @@
 import { TwitterPostClient } from "./post.ts";
 import { TwitterSearchClient } from "./search.ts";
 import { TwitterInteractionClient } from "./interactions.ts";
+import { TwitterMediaClient } from "./media.ts";
 import { IAgentRuntime, Client, elizaLogger } from "@ai16z/eliza";
 import { validateTwitterConfig } from "./enviroment.ts";
 import { ClientBase } from "./base.ts";
@@ -10,6 +11,7 @@ class TwitterManager {
     post: TwitterPostClient;
     search: TwitterSearchClient;
     interaction: TwitterInteractionClient;
+    media: TwitterMediaClient;
     constructor(runtime: IAgentRuntime) {
         this.client = new ClientBase(runtime);
         this.post = new TwitterPostClient(this.client, runtime);
@@ -18,6 +20,7 @@ class TwitterManager {
         // burns your rate limit and can get your account banned
         // use at your own risk
         this.interaction = new TwitterInteractionClient(this.client, runtime);
+        this.media = new TwitterMediaClient(this.client, runtime);
     }
 }
 
@@ -34,6 +37,8 @@ export const TwitterClientInterface: Client = {
         await manager.post.start();
 
         await manager.interaction.start();
+
+        await manager.media.start();
 
         return manager;
     },
