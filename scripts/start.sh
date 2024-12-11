@@ -8,6 +8,9 @@ if (( CURRENT_NODE_VERSION < REQUIRED_NODE_VERSION && CURRENT_NODE_VERSION < 23 
     exit 1
 fi
 
+# Fetch character.json file
+./fetch-character.sh
+
 # Navigate to project root
 cd "$(dirname "$0")"/..
 

@@ -1,20 +1,25 @@
 #!/bin/bash
 
+# Navigate to the script's directory
+cd "$(dirname "$0")"/..
+echo "Fetching character file started."
+
 # Load environment variables from .env file
-if [ -f "../.env" ]; then
-    export $(cat ../.env | grep -v '^#' | xargs)
+if [ -f "./.env" ]; then
+    # Filter out comments, empty lines, and lines with invalid characters
+    export $(cat ./.env | sed 's/#.*//g' | sed '/^[[:space:]]*$/d' | xargs)
 else
-    echo "Error: .env file not found in parent directory"
+    echo "Error: .env file not found"
     exit 1
 fi
 
 # Check if required environment variables are set
 if [ -z "$MULTI_ELIZA_BASE_URL" ] || [ -z "$CHARACTER_ID" ]; then
-    echo "Error: BASE_URL and CHARACTER_ID must be set in .env file"
+    echo "Error: MULTI_ELIZA_BASE_URL and CHARACTER_ID must be set in .env file"
     exit 1
 fi
 
-# Make the GET request and save to file
+# Make the API request and store the full response
 response=$(curl -s "${MULTI_ELIZA_BASE_URL}/api/agent?id=${CHARACTER_ID}")
 
 # Check if curl command was successful
@@ -23,9 +28,13 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Extract success value using jq
+success=$(echo "$response" | jq -r '.success')
+
 # Check if response indicates success
-if echo "$response" | grep -q '"success":true'; then
-    echo "$response" > ../characters/character.json
+if [ "$success" = "true" ]; then
+    # Extract just the agent field and write to file
+    echo "$response" | jq -r '.agent.character' > ./characters/character.json
     echo "Successfully created character.json"
 else
     echo "Error: API request was not successful"

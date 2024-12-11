@@ -31,8 +31,8 @@ RUN pnpm install \
 # Create a new stage for the final image
 FROM node:23.3.0-slim
 
-# Install runtime dependencies if needed
-RUN npm install -g pnpm@9.4.0 && \
+# Install runtime dependencies including wait-on
+RUN npm install -g pnpm@9.4.0 wait-on && \
     apt-get update && \
     apt-get install -y git python3 && \
     apt-get clean && \
@@ -51,5 +51,7 @@ COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/characters ./characters
 
-# Set the command to run the application
-CMD ["pnpm", "start", "--non-interactive"]
+# Modify the command to run fetch-character and then start the agent
+CMD sh scripts/fetch-character.sh && \
+    wait-on characters/character.json && \
+    pnpm --filter "@ai16z/agent" start --isRoot --characters="characters/character.json" --non-interactive
