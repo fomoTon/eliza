@@ -112,7 +112,9 @@ export class TwitterPostClient {
             this.generateNewTweet();
         }
 
-        generateNewTweetLoop();
+        setTimeout(() => {
+            generateNewTweetLoop();
+        }, 30 * 60 * 1000);
     }
 
     constructor(client: ClientBase, runtime: IAgentRuntime) {
