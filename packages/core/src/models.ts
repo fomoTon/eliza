@@ -52,7 +52,7 @@ export const models: Models = {
         },
         endpoint: "https://api.anthropic.com/v1",
         model: {
-            [ModelClass.SMALL]: "claude-3-haiku-20240307",
+            [ModelClass.SMALL]: "claude-3-5-sonnet-20241022",
             [ModelClass.MEDIUM]: "claude-3-5-sonnet-20241022",
             [ModelClass.LARGE]: "claude-3-5-sonnet-20241022",
         },
