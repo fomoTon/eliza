@@ -11,7 +11,7 @@ class TwitterManager {
     post: TwitterPostClient;
     search: TwitterSearchClient;
     interaction: TwitterInteractionClient;
-    media: TwitterMediaClient;
+   //media: TwitterMediaClient;
     constructor(runtime: IAgentRuntime) {
         this.client = new ClientBase(runtime);
         this.post = new TwitterPostClient(this.client, runtime);
@@ -20,7 +20,7 @@ class TwitterManager {
         // burns your rate limit and can get your account banned
         // use at your own risk
         this.interaction = new TwitterInteractionClient(this.client, runtime);
-        this.media = new TwitterMediaClient(this.client, runtime);
+        //this.media = new TwitterMediaClient(this.client, runtime);
     }
 }
 
@@ -38,7 +38,7 @@ export const TwitterClientInterface: Client = {
 
         await manager.interaction.start();
 
-        await manager.media.start();
+        //await manager.media.start();
 
         return manager;
     },
