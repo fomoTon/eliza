@@ -4,18 +4,9 @@
 cd "$(dirname "$0")"/..
 echo "Fetching character file started."
 
-# Load environment variables from .env file
-if [ -f "./.env" ]; then
-    # Filter out comments, empty lines, and lines with invalid characters
-    export $(cat ./.env | sed 's/#.*//g' | sed '/^[[:space:]]*$/d' | xargs)
-else
-    echo "Error: .env file not found"
-    exit 1
-fi
-
 # Check if required environment variables are set
 if [ -z "$MULTI_ELIZA_BASE_URL" ] || [ -z "$CHARACTER_ID" ]; then
-    echo "Error: MULTI_ELIZA_BASE_URL and CHARACTER_ID must be set in .env file"
+    echo "Error: MULTI_ELIZA_BASE_URL and CHARACTER_ID must be set in environment"
     exit 1
 fi
 
