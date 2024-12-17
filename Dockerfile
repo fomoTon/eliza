@@ -31,10 +31,10 @@ RUN pnpm install \
 # Create a new stage for the final image
 FROM node:23.3.0-slim
 
-# Install runtime dependencies including wait-on
+# Install runtime dependencies including wait-on, curl, and jq
 RUN npm install -g pnpm@9.4.0 wait-on && \
     apt-get update && \
-    apt-get install -y git python3 && \
+    apt-get install -y git python3 curl jq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

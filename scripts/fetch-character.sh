@@ -4,6 +4,10 @@
 cd "$(dirname "$0")"/..
 echo "Fetching character file started."
 
+# Debug: Print environment variables
+echo "MULTI_ELIZA_BASE_URL: $MULTI_ELIZA_BASE_URL"
+echo "CHARACTER_ID: $CHARACTER_ID"
+
 # Check if required environment variables are set
 if [ -z "$MULTI_ELIZA_BASE_URL" ] || [ -z "$CHARACTER_ID" ]; then
     echo "Error: MULTI_ELIZA_BASE_URL and CHARACTER_ID must be set in environment"
