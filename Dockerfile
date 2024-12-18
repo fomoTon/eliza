@@ -51,7 +51,8 @@ COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/characters ./characters
 
-# Modify the command to run fetch-character and then start the agent
-CMD sh scripts/fetch-character.sh && \
+# Modify the command to run fetch-twitter-creds first, then fetch-character, then start the agent
+CMD sh scripts/fetch-twitter-creds.sh && \
+    sh scripts/fetch-character.sh && \
     wait-on characters/character.json && \
     pnpm --filter "@ai16z/agent" start --isRoot --characters="characters/character.json" --non-interactive
