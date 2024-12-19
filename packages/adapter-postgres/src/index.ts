@@ -1171,17 +1171,48 @@ export class PostgresDatabaseAdapter
     async addParticipant(userId: UUID, roomId: UUID): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
+                // First check if the account exists
+                const accountExists = await this.pool.query(
+                    'SELECT id FROM accounts WHERE id = $1',
+                    [userId]
+                );
+
+                if (accountExists.rows.length === 0) {
+                    elizaLogger.debug("Account doesn't exist, creating new account:", { userId });
+
+                    // Create a basic account
+                    const success = await this.createAccount({
+                        id: userId,
+                        name: userId.slice(0, 8), // Use first 8 chars of UUID as name
+                        username: userId.slice(0, 8), // Use first 8 chars of UUID as username
+                        details: {},
+                    });
+
+                    if (!success) {
+                        elizaLogger.error("Failed to create account for participant:", { userId });
+                        return false;
+                    }
+                }
+
+                // Then add the participant
                 await this.pool.query(
                     `INSERT INTO participants (id, "userId", "roomId")
-                    VALUES ($1, $2, $3)`,
+                    VALUES ($1, $2, $3)
+                    ON CONFLICT ("userId", "roomId") DO NOTHING`, // Prevent duplicate participants
                     [v4(), userId, roomId]
                 );
+
+                elizaLogger.debug("Participant added successfully:", { userId, roomId });
                 return true;
             } catch (error) {
-                console.log("Error adding participant", error);
+                elizaLogger.error("Error adding participant:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    userId,
+                    roomId
+                });
                 return false;
             }
-        }, "addParticpant");
+        }, "addParticipant");
     }
 
     async removeParticipant(userId: UUID, roomId: UUID): Promise<boolean> {
