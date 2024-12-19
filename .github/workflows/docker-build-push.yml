@@ -1,4 +1,4 @@
-name: Build and Push to DOCR
+name: Build and Push to Google Artifact Registry
 
 on:
   push:
@@ -12,24 +12,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
         with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Log in to DO Container Registry
-        run: doctl registry login --expiry-seconds 600
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker us-east1-docker.pkg.dev
 
       - name: Build and push
         env:
-          REGISTRY: registry.digitalocean.com
-          REPOSITORY: fomo-fund
+          REGISTRY: us-east1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/eliza
           IMAGE_NAME: eliza
           TAG: ${{ github.sha }}
         run: |
-          docker build -t $REGISTRY/$REPOSITORY/$IMAGE_NAME:$TAG .
-          docker push $REGISTRY/$REPOSITORY/$IMAGE_NAME:$TAG
+          docker build -t $REGISTRY/$IMAGE_NAME:$TAG .
+          docker push $REGISTRY/$IMAGE_NAME:$TAG
 
           # Also tag as latest
-          docker tag $REGISTRY/$REPOSITORY/$IMAGE_NAME:$TAG $REGISTRY/$REPOSITORY/$IMAGE_NAME:latest
-          docker push $REGISTRY/$REPOSITORY/$IMAGE_NAME:latest
+          docker tag $REGISTRY/$IMAGE_NAME:$TAG $REGISTRY/$IMAGE_NAME:latest
+          docker push $REGISTRY/$IMAGE_NAME:latest
