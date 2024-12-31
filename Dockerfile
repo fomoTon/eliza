@@ -4,7 +4,7 @@ FROM node:23.3.0-slim AS builder
 # Install pnpm globally and install necessary build tools
 RUN npm install -g pnpm@9.4.0 && \
     apt-get update && \
-    apt-get install -y git python3 make g++ && \
+    apt-get install -y git python3 python3-pip make g++ && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -16,6 +16,10 @@ WORKDIR /app
 
 # Copy package.json and other configuration files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json ./
+COPY requirements.txt ./
+
+# Install Python dependencies
+RUN pip3 install -r requirements.txt
 
 # Copy the rest of the application code
 COPY agent ./agent
@@ -31,14 +35,18 @@ RUN pnpm install \
 # Create a new stage for the final image
 FROM node:23.3.0-slim
 
-# Install runtime dependencies including wait-on, curl, and jq
+# Install runtime dependencies including wait-on and Python
 RUN npm install -g pnpm@9.4.0 wait-on && \
     apt-get update && \
-    apt-get install -y git python3 curl jq && \
+    apt-get install -y git python3 python3-pip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Copy Python requirements and install dependencies
+COPY requirements.txt ./
+RUN pip3 install -r requirements.txt
 
 # Copy built artifacts and production dependencies from the builder stage
 COPY --from=builder /app/package.json ./
@@ -51,8 +59,8 @@ COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/characters ./characters
 
-# Modify the command to run fetch-twitter-creds first, then fetch-character, then start the agent
-CMD sh scripts/fetch-twitter-creds.sh && \
-    sh scripts/fetch-character.sh && \
+# Modify the command to use Python scripts instead of bash
+CMD python3 scripts/fetch_twitter_creds.py && \
+    python3 scripts/fetch_character.py && \
     wait-on characters/character.json && \
     pnpm --filter "@ai16z/agent" start --isRoot --characters="characters/character.json" --non-interactive

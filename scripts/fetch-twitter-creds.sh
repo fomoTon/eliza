@@ -16,43 +16,22 @@ if [ -z "$GOOGLE_CREDENTIALS" ]; then
     exit 1
 fi
 
-# Add this near the start of the script
-echo "Debug: GOOGLE_CREDENTIALS structure:"
-echo "$GOOGLE_CREDENTIALS" | jq '.' || echo "Failed to parse GOOGLE_CREDENTIALS as JSON"
+# Extract private key using sed
+echo "Extracting private key..."
+PRIVATE_KEY=$(echo "$GOOGLE_CREDENTIALS" | sed -n '/BEGIN PRIVATE KEY/,/END PRIVATE KEY/p' || echo "Failed to extract private key")
 
-# Debug the raw credentials with different approaches
-echo "Debug: GOOGLE_CREDENTIALS raw content:"
-echo "$GOOGLE_CREDENTIALS"
+# Write the private key to file (only if we extracted something)
+if [[ "$PRIVATE_KEY" == *"PRIVATE KEY"* ]]; then
+    echo "$PRIVATE_KEY" > /tmp/private.pem
+    chmod 600 /tmp/private.pem
+else
+    echo "Error: Failed to extract private key content"
+    exit 1
+fi
 
-echo "Debug: Attempting to format GOOGLE_CREDENTIALS:"
-echo "$GOOGLE_CREDENTIALS" | jq '.' || echo "Failed initial jq parsing"
-
-# Try storing in a temporary file first
-echo "$GOOGLE_CREDENTIALS" > /tmp/creds.json
-echo "Debug: Content from temp file:"
-cat /tmp/creds.json | jq '.' || echo "Failed parsing from file"
-
-# Skip the failing jq parsing and go straight to extracting the private key
-echo "Debug: Extracting private key..."
-PRIVATE_KEY=$(echo "$GOOGLE_CREDENTIALS" | grep -A999 "PRIVATE KEY-----" | grep -B999 "-----END" || echo "Failed to extract private key")
-
-# Write the private key to file ensuring proper formatting
-echo "-----BEGIN PRIVATE KEY-----" > /tmp/private.pem
-echo "$PRIVATE_KEY" | grep -v "PRIVATE KEY" >> /tmp/private.pem
-echo "-----END PRIVATE KEY-----" >> /tmp/private.pem
-
-# Debug the private key file
-echo "Debug: Content of private.pem:"
-cat /tmp/private.pem
-
-# Set proper permissions
-chmod 600 /tmp/private.pem
-
-# Clean up temp file
-rm -f /tmp/creds.json
+echo "Generating JWT token..."
 
 # Get JWT token using service account credentials
-echo "Generating JWT token..."
 CURRENT_TIME=$(date +%s)
 JWT_CLAIM=$(echo "$GOOGLE_CREDENTIALS" | jq -r --arg now "$CURRENT_TIME" '{
     "iss": .client_email,
