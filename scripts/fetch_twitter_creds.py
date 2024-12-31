@@ -19,9 +19,6 @@ print(f"Accessing secret: {secret_name}")
 
 # Access the secret
 try:
-    # Print the current credentials being used
-    print("Current credentials:", client._credentials.service_account_email)
-
     response = client.access_secret_version(request={"name": secret_name})
     secret = json.loads(response.payload.data.decode("UTF-8"))
     print("Successfully retrieved and decoded secret")
