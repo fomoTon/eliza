@@ -29,7 +29,7 @@ except Exception as e:
 
 # Set environment variables
 print("Setting environment variables...")
-os.environ["TWITTER_USERNAME"] = secret["twitterUsername"]
-os.environ["TWITTER_PASSWORD"] = secret["twitterPassword"]
-os.environ["TWITTER_EMAIL"] = secret["twitterEmail"]
+os.environ["TWITTER_USERNAME"] = secret["username"]
+os.environ["TWITTER_PASSWORD"] = secret["password"]
+os.environ["TWITTER_EMAIL"] = secret["email"]
 print("Environment variables set successfully")
