@@ -32,9 +32,9 @@ echo "$GOOGLE_CREDENTIALS" > /tmp/creds.json
 echo "Debug: Content from temp file:"
 cat /tmp/creds.json | jq '.' || echo "Failed parsing from file"
 
-# Extract private key using the temp file
+# Skip the failing jq parsing and go straight to extracting the private key
 echo "Debug: Extracting private key..."
-PRIVATE_KEY=$(cat /tmp/creds.json | jq -r '.private_key' || echo "Failed to extract private key")
+PRIVATE_KEY=$(echo "$GOOGLE_CREDENTIALS" | grep -A999 "PRIVATE KEY-----" | grep -B999 "-----END" || echo "Failed to extract private key")
 
 # Write the private key to file ensuring proper formatting
 echo "-----BEGIN PRIVATE KEY-----" > /tmp/private.pem
@@ -45,11 +45,11 @@ echo "-----END PRIVATE KEY-----" >> /tmp/private.pem
 echo "Debug: Content of private.pem:"
 cat /tmp/private.pem
 
-# Clean up temp file
-rm -f /tmp/creds.json
-
 # Set proper permissions
 chmod 600 /tmp/private.pem
+
+# Clean up temp file
+rm -f /tmp/creds.json
 
 # Get JWT token using service account credentials
 echo "Generating JWT token..."
