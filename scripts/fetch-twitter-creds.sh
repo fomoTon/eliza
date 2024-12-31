@@ -16,6 +16,13 @@ if [ -z "$GOOGLE_CREDENTIALS" ]; then
     exit 1
 fi
 
+# Extract private key and create signature
+echo "Debug: Extracting private key..."
+PRIVATE_KEY=$(echo "$GOOGLE_CREDENTIALS" | jq -r '.private_key' | sed 's/\\n/\n/g')
+
+# Debug: Check private key content (redacted)
+echo "Debug: First line of private key: $(echo "$PRIVATE_KEY" | head -n 1)"
+
 # Get JWT token using service account credentials
 echo "Generating JWT token..."
 CURRENT_TIME=$(date +%s)
