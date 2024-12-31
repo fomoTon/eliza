@@ -45,15 +45,11 @@ FROM node:23.3.0-slim
 # Install runtime dependencies including wait-on and Python
 RUN npm install -g pnpm@9.4.0 wait-on && \
     apt-get update && \
-    apt-get install -y git python3 python3-pip python3-venv && \
+    apt-get install -y git python3 python3-venv && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-# Copy Python requirements and install dependencies
-COPY requirements.txt ./
-RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy built artifacts and production dependencies from the builder stage
 COPY --from=builder /app/package.json ./
