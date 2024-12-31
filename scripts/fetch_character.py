@@ -27,6 +27,11 @@ def main():
         data = response.json()
 
         if data.get('success'):
+            # Print the character data for debugging
+            print("\nCharacter data received:")
+            print(json.dumps(data['agent']['character'], indent=2))
+            print("\n")
+
             # Ensure the characters directory exists
             Path('./characters').mkdir(exist_ok=True)
 
