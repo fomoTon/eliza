@@ -16,17 +16,30 @@ if [ -z "$GOOGLE_CREDENTIALS" ]; then
     exit 1
 fi
 
+# Add this near the start of the script
+echo "Debug: GOOGLE_CREDENTIALS structure:"
+echo "$GOOGLE_CREDENTIALS" | jq '.' || echo "Failed to parse GOOGLE_CREDENTIALS as JSON"
+
 # Extract private key and create signature
 echo "Debug: Extracting private key..."
-PRIVATE_KEY=$(echo "$GOOGLE_CREDENTIALS" | jq -r '.private_key' | sed 's/\\n/\n/g')
+PRIVATE_KEY=$(echo "$GOOGLE_CREDENTIALS" | jq -r '.private_key' | awk '{gsub(/\\n/,"\n")}1')
 
-# Debug: Check private key content (redacted)
-echo "Debug: First line of private key: $(echo "$PRIVATE_KEY" | head -n 1)"
+# Write the private key to file ensuring proper formatting
+echo "-----BEGIN PRIVATE KEY-----" > /tmp/private.pem
+echo "$PRIVATE_KEY" | grep -v "PRIVATE KEY" >> /tmp/private.pem
+echo "-----END PRIVATE KEY-----" >> /tmp/private.pem
+
+# Set proper permissions
+chmod 600 /tmp/private.pem
+
+# Debug: Verify the private key file
+echo "Debug: Content of private.pem:"
+cat /tmp/private.pem
 
 # Get JWT token using service account credentials
 echo "Generating JWT token..."
 CURRENT_TIME=$(date +%s)
-JWT_CLAIM=$(echo $GOOGLE_CREDENTIALS | jq -r --arg now "$CURRENT_TIME" '{
+JWT_CLAIM=$(echo "$GOOGLE_CREDENTIALS" | jq -r --arg now "$CURRENT_TIME" '{
     "iss": .client_email,
     "scope": "https://www.googleapis.com/auth/cloud-platform",
     "aud": "https://oauth2.googleapis.com/token",
@@ -39,10 +52,6 @@ JWT_HEADER=$(echo -n '{"alg":"RS256","typ":"JWT"}' | base64 -w 0 | tr '+/' '-_' 
 
 # Create JWT payload
 JWT_PAYLOAD=$(echo -n "$JWT_CLAIM" | base64 -w 0 | tr '+/' '-_' | tr -d '=')
-
-# Extract private key and create signature
-PRIVATE_KEY=$(echo "$GOOGLE_CREDENTIALS" | jq -r '.private_key')
-echo "$PRIVATE_KEY" > /tmp/private.pem
 
 # Create JWT signature
 JWT_SIGNATURE=$(echo -n "${JWT_HEADER}.${JWT_PAYLOAD}" | openssl dgst -binary -sha256 -sign /tmp/private.pem | base64 -w 0 | tr '+/' '-_' | tr -d '=')
