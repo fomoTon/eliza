@@ -20,21 +20,36 @@ fi
 echo "Debug: GOOGLE_CREDENTIALS structure:"
 echo "$GOOGLE_CREDENTIALS" | jq '.' || echo "Failed to parse GOOGLE_CREDENTIALS as JSON"
 
-# Extract private key and create signature
+# Debug the raw credentials with different approaches
+echo "Debug: GOOGLE_CREDENTIALS raw content:"
+echo "$GOOGLE_CREDENTIALS"
+
+echo "Debug: Attempting to format GOOGLE_CREDENTIALS:"
+echo "$GOOGLE_CREDENTIALS" | jq '.' || echo "Failed initial jq parsing"
+
+# Try storing in a temporary file first
+echo "$GOOGLE_CREDENTIALS" > /tmp/creds.json
+echo "Debug: Content from temp file:"
+cat /tmp/creds.json | jq '.' || echo "Failed parsing from file"
+
+# Extract private key using the temp file
 echo "Debug: Extracting private key..."
-PRIVATE_KEY=$(echo "$GOOGLE_CREDENTIALS" | jq -r '.private_key' | awk '{gsub(/\\n/,"\n")}1')
+PRIVATE_KEY=$(cat /tmp/creds.json | jq -r '.private_key' || echo "Failed to extract private key")
 
 # Write the private key to file ensuring proper formatting
 echo "-----BEGIN PRIVATE KEY-----" > /tmp/private.pem
 echo "$PRIVATE_KEY" | grep -v "PRIVATE KEY" >> /tmp/private.pem
 echo "-----END PRIVATE KEY-----" >> /tmp/private.pem
 
-# Set proper permissions
-chmod 600 /tmp/private.pem
-
-# Debug: Verify the private key file
+# Debug the private key file
 echo "Debug: Content of private.pem:"
 cat /tmp/private.pem
+
+# Clean up temp file
+rm -f /tmp/creds.json
+
+# Set proper permissions
+chmod 600 /tmp/private.pem
 
 # Get JWT token using service account credentials
 echo "Generating JWT token..."
