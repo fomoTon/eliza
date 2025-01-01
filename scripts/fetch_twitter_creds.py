@@ -8,11 +8,6 @@ creds_json = json.loads(os.getenv('GOOGLE_CREDENTIALS', '{}'))
 credentials = service_account.Credentials.from_service_account_info(creds_json)
 client = secretmanager.SecretManagerServiceClient(credentials=credentials)
 
-# Print environment variables for debugging
-print(f"GOOGLE_CLOUD_PROJECT: {os.getenv('GOOGLE_CLOUD_PROJECT')}")
-print(f"CHARACTER_ID: {os.getenv('CHARACTER_ID')}")
-print(f"GOOGLE_CREDENTIALS: {os.getenv('GOOGLE_CREDENTIALS')}")
-
 # Build the resource name
 secret_name = f"projects/{os.getenv('GOOGLE_CLOUD_PROJECT')}/secrets/twitter-{os.getenv('CHARACTER_ID')}/versions/latest"
 print(f"Accessing secret: {secret_name}")
