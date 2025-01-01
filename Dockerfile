@@ -69,7 +69,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Modify the command to use Python scripts instead of bash
 CMD python3 scripts/fetch_twitter_creds.py && \
-    source /app/.env.twitter && \
+    . /app/.env.twitter && \
     python3 scripts/fetch_character.py && \
     wait-on characters/character.json && \
     pnpm --filter "@ai16z/agent" start --isRoot --characters="characters/character.json" --non-interactive

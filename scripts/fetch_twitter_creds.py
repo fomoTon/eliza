@@ -22,9 +22,11 @@ except Exception as e:
     print(f"Full error details: {str(e)}")
     raise
 
-# Set environment variables
-print("Setting environment variables...")
-os.environ["TWITTER_USERNAME"] = secret["username"]
-os.environ["TWITTER_PASSWORD"] = secret["password"]
-os.environ["TWITTER_EMAIL"] = secret["email"]
-print("Environment variables set successfully")
+# Instead of setting environment variables directly, write to a file that can be sourced
+# We do this so the variables are available to the agent at runtime
+print("Writing environment variables to file...")
+with open('/app/.env.twitter', 'w') as f:
+    f.write(f"export TWITTER_USERNAME='{secret['username']}'\n")
+    f.write(f"export TWITTER_PASSWORD='{secret['password']}'\n")
+    f.write(f"export TWITTER_EMAIL='{secret['email']}'\n")
+print("Environment variables written successfully")
