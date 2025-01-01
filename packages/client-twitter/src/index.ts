@@ -1,5 +1,6 @@
 import { TwitterPostClient } from "./post.ts";
 import { TwitterSearchClient } from "./search.ts";
+import { TwitterSpaceClient } from "./spaces.ts";
 import { TwitterInteractionClient } from "./interactions.ts";
 import { IAgentRuntime, Client, elizaLogger } from "@ai16z/eliza";
 import { validateTwitterConfig } from "./environment.ts";
@@ -10,6 +11,7 @@ class TwitterManager {
     post: TwitterPostClient;
     search: TwitterSearchClient;
     interaction: TwitterInteractionClient;
+    space?: TwitterSpaceClient;
     constructor(runtime: IAgentRuntime) {
         this.client = new ClientBase(runtime);
         this.post = new TwitterPostClient(this.client, runtime);
@@ -18,6 +20,10 @@ class TwitterManager {
         // burns your rate limit and can get your account banned
         // use at your own risk
         this.interaction = new TwitterInteractionClient(this.client, runtime);
+        // Optional Spaces logic (enabled if TWITTER_SPACES_ENABLE is true)
+        if (runtime.getSetting("TWITTER_SPACES_ENABLE") || process.env.TWITTER_SPACES_ENABLE === "true") {
+            this.space = new TwitterSpaceClient(this.client, runtime);
+        }
     }
 }
 
@@ -34,6 +40,11 @@ export const TwitterClientInterface: Client = {
         await manager.post.start();
 
         await manager.interaction.start();
+
+        // If Spaces are enabled, start the periodic check
+        if (manager.space) {
+            manager.space.startPeriodicSpaceCheck();
+        }
 
         return manager;
     },

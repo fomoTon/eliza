@@ -9,6 +9,7 @@ export const twitterEnvSchema = z.object({
     TWITTER_PASSWORD: z.string().min(1, "Twitter password is required"),
     TWITTER_EMAIL: z.string().email("Valid Twitter email is required"),
     TWITTER_COOKIES: z.string().optional(),
+    TWITTER_SPACES_ENABLE: z.boolean().default(false),
 });
 
 export type TwitterConfig = z.infer<typeof twitterEnvSchema>;
@@ -34,6 +35,11 @@ export async function validateTwitterConfig(
             TWITTER_COOKIES:
                 runtime.getSetting("TWITTER_COOKIES") ||
                 process.env.TWITTER_COOKIES,
+            TWITTER_SPACES_ENABLE: Boolean(
+                runtime.getSetting("TWITTER_SPACES_ENABLE") ||
+                process.env.TWITTER_SPACES_ENABLE ||
+                false
+            ),
         };
 
         return twitterEnvSchema.parse(config);

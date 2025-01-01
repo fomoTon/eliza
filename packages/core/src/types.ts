@@ -702,6 +702,7 @@ export type Character = {
             solana?: any[];
             [key: string]: any[];
         };
+        transcription?: string;
     };
 
     /** Optional client-specific config */
@@ -1156,3 +1157,9 @@ export type KnowledgeItem = {
     id: UUID;
     content: Content;
 };
+
+export enum TranscriptionProvider {
+    OpenAI = "openai",
+    Deepgram = "deepgram",
+    Local = "local",
+}
