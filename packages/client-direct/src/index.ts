@@ -135,6 +135,11 @@ export class DirectClient {
         this.app.post(
             "/:agentId/message",
             async (req: express.Request, res: express.Response) => {
+                if (!req.body.text) {
+                    res.status(400).send("Message text is required");
+                    return;
+                }
+
                 const agentId = req.params.agentId;
                 const roomId = stringToUuid(
                     req.body.roomId ?? "default-room-" + agentId
@@ -143,12 +148,10 @@ export class DirectClient {
 
                 let runtime = this.agents.get(agentId);
 
-                // if runtime is null, look for runtime with the same name
+                // if runtime is null, look for runtime with the same agentId
                 if (!runtime) {
                     runtime = Array.from(this.agents.values()).find(
-                        (a) =>
-                            a.character.name.toLowerCase() ===
-                            agentId.toLowerCase()
+                        (a) => a.agentId === agentId
                     );
                 }
 
