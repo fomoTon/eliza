@@ -1,4 +1,4 @@
-import { SearchMode } from "agent-twitter-client";
+import { SearchMode, Scraper } from "agent-twitter-client";
 import { composeContext } from "@ai16z/eliza";
 import { generateMessageResponse, generateText } from "@ai16z/eliza";
 import { messageCompletionFooter } from "@ai16z/eliza";
@@ -14,6 +14,8 @@ import {
 import { stringToUuid } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
+import { TwitterApi } from "twitter-api-v2";
+
 
 const twitterSearchTemplate =
     `{{timeline}}
@@ -46,10 +48,7 @@ export class TwitterSearchClient extends ClientBase {
     private respondedTweets: Set<string> = new Set();
 
     constructor(runtime: IAgentRuntime) {
-        // Initialize the client and pass an optional callback to be called when the client is ready
-        super({
-            runtime,
-        });
+        super(runtime);
     }
 
     async onReady() {
@@ -108,7 +107,7 @@ export class TwitterSearchClient extends ClientBase {
 
             const prompt = `
   Here are some tweets related to the search term "${searchTerm}":
-  
+
   ${[...slicedTweets, ...homeTimeline]
       .filter((tweet) => {
           // ignore tweets where any of the thread tweets contain a tweet by the bot
@@ -126,7 +125,7 @@ export class TwitterSearchClient extends ClientBase {
   `
       )
       .join("\n")}
-  
+
   Which tweet is the most interesting and relevant for Ruby to reply to? Please provide only the ID of the tweet in your response.
   Notes:
     - Respond to English tweets only
@@ -218,9 +217,21 @@ export class TwitterSearchClient extends ClientBase {
 
             let tweetBackground = "";
             if (selectedTweet.isRetweet) {
-                const originalTweet = await this.requestQueue.add(() =>
-                    this.twitterClient.getTweet(selectedTweet.id)
-                );
+                const originalTweet = await this.requestQueue.add(async () => {
+                    if (this.clientType === 'api') {
+                        const result = await (this.twitterClient as TwitterApi).v2.singleTweet(selectedTweet.id, {
+                            expansions: ['author_id'],
+                            'user.fields': ['username']
+                        });
+                        return {
+                            id: result.data.id,
+                            username: result.data.author_id,
+                            text: result.data.text
+                        };
+                    } else {
+                        return await (this.twitterClient as Scraper).getTweet(selectedTweet.id);
+                    }
+                });
                 tweetBackground = `Retweeting @${originalTweet.username}: ${originalTweet.text}`;
             }
 
@@ -231,17 +242,16 @@ export class TwitterSearchClient extends ClientBase {
                     .getService<IImageDescriptionService>(
                         ServiceType.IMAGE_DESCRIPTION
                     )
-                    .getInstance()
                     .describeImage(photo.url);
                 imageDescriptions.push(description);
             }
 
             let state = await this.runtime.composeState(message, {
-                twitterClient: this.twitterClient,
+                twitterClient: this.clientType === 'api' ? undefined : this.twitterClient,
                 twitterUserName: this.runtime.getSetting("TWITTER_USERNAME"),
                 timeline: formattedHomeTimeline,
                 tweetContext: `${tweetBackground}
-  
+
   Original Post:
   By @${selectedTweet.username}
   ${selectedTweet.text}${replyContext.length > 0 && `\nReplies to original post:\n${replyContext}`}

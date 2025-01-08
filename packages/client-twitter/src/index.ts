@@ -39,12 +39,12 @@ export const TwitterClientInterface: Client = {
 
         await manager.post.start();
 
-        await manager.interaction.start();
+        // await manager.interaction.start();
 
         // If Spaces are enabled, start the periodic check
-        if (manager.space) {
-            manager.space.startPeriodicSpaceCheck();
-        }
+        // if (manager.space) {
+        //     manager.space.startPeriodicSpaceCheck();
+        // }
 
         return manager;
     },

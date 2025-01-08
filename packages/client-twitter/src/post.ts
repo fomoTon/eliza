@@ -1,4 +1,4 @@
-import { Tweet } from "agent-twitter-client";
+import { Tweet, Scraper } from "agent-twitter-client";
 import {
     composeContext,
     generateText,
@@ -10,6 +10,8 @@ import {
 } from "@ai16z/eliza";
 import { elizaLogger } from "@ai16z/eliza";
 import { ClientBase } from "./base.ts";
+import { TwitterApi } from "twitter-api-v2";
+import { TweetV2PostTweetResult } from 'twitter-api-v2';
 
 const twitterPostTemplate = `
 # Areas of Expertise
@@ -183,70 +185,126 @@ export class TwitterPostClient {
             try {
                 elizaLogger.log(`Posting new tweet:\n ${content}`);
 
-                const result = await this.client.requestQueue.add(
-                    async () =>
-                        await this.client.twitterClient.sendTweet(content)
-                );
-                const body = await result.json();
-                if (!body?.data?.create_tweet?.tweet_results?.result) {
-                    console.error("Error sending tweet; Bad response:", body);
-                    return;
-                }
-                const tweetResult = body.data.create_tweet.tweet_results.result;
-
-                const tweet = {
-                    id: tweetResult.rest_id,
-                    name: this.client.profile.screenName,
-                    username: this.client.profile.username,
-                    text: tweetResult.legacy.full_text,
-                    conversationId: tweetResult.legacy.conversation_id_str,
-                    createdAt: tweetResult.legacy.created_at,
-                    timestamp: new Date(
-                        tweetResult.legacy.created_at
-                    ).getTime(),
-                    userId: this.client.profile.id,
-                    inReplyToStatusId:
-                        tweetResult.legacy.in_reply_to_status_id_str,
-                    permanentUrl: `https://twitter.com/${this.runtime.getSetting("TWITTER_USERNAME")}/status/${tweetResult.rest_id}`,
-                    hashtags: [],
-                    mentions: [],
-                    photos: [],
-                    thread: [],
-                    urls: [],
-                    videos: [],
-                } as Tweet;
-
-                await this.runtime.cacheManager.set(
-                    `twitter/${this.client.profile.username}/lastPost`,
-                    {
-                        id: tweet.id,
-                        timestamp: Date.now(),
+                const result = await this.client.requestQueue.add(async () => {
+                    if (this.client.clientType === "api") {
+                        return await (
+                            this.client.twitterClient as TwitterApi
+                        ).v2.tweet(content);
+                    } else {
+                        return await (
+                            this.client.twitterClient as Scraper
+                        ).sendTweet(content);
                     }
-                );
-
-                await this.client.cacheTweet(tweet);
-
-                elizaLogger.log(`Tweet posted:\n ${tweet.permanentUrl}`);
-
-                await this.runtime.ensureRoomExists(roomId);
-                await this.runtime.ensureParticipantInRoom(
-                    this.runtime.agentId,
-                    roomId
-                );
-
-                await this.runtime.messageManager.createMemory({
-                    id: stringToUuid(tweet.id + "-" + this.runtime.agentId),
-                    userId: this.runtime.agentId,
-                    agentId: this.runtime.agentId,
-                    content: {
-                        text: newTweetContent.trim(),
-                        url: tweet.permanentUrl,
-                        source: "twitter",
-                    },
-                    roomId,
-                    embedding: getEmbeddingZeroVector(),
-                    createdAt: tweet.timestamp,
                 });
+
+                // Update response handling for API v2
+                if (this.client.clientType === "api") {
+                    const apiResult = result as TweetV2PostTweetResult;
+                    const tweet = {
+                        id: apiResult.data.id,
+                        name: this.client.profile.screenName,
+                        username: this.client.profile.username,
+                        text: apiResult.data.text,
+                        conversationId: apiResult.data.id,
+                        createdAt: new Date().toISOString(),
+                        timestamp: Date.now(),
+                        userId: this.client.profile.id,
+                        permanentUrl: `https://twitter.com/${this.runtime.getSetting("TWITTER_USERNAME")}/status/${apiResult.data.id}`,
+                        hashtags: [],
+                        mentions: [],
+                        photos: [],
+                        thread: [],
+                        urls: [],
+                        videos: [],
+                    } as Tweet;
+
+                    await this.runtime.cacheManager.set(
+                        `twitter/${this.client.profile.username}/lastPost`,
+                        {
+                            id: tweet.id,
+                            timestamp: Date.now(),
+                        }
+                    );
+
+                    await this.client.cacheTweet(tweet);
+
+                    elizaLogger.log(`Tweet posted:\n ${tweet.permanentUrl}`);
+
+                    await this.runtime.ensureRoomExists(roomId);
+                    await this.runtime.ensureParticipantInRoom(
+                        this.runtime.agentId,
+                        roomId
+                    );
+
+                    await this.runtime.messageManager.createMemory({
+                        id: stringToUuid(tweet.id + "-" + this.runtime.agentId),
+                        userId: this.runtime.agentId,
+                        agentId: this.runtime.agentId,
+                        content: {
+                            text: newTweetContent.trim(),
+                            url: tweet.permanentUrl,
+                            source: "twitter",
+                        },
+                        roomId,
+                        embedding: getEmbeddingZeroVector(),
+                        createdAt: tweet.timestamp,
+                    });
+                } else {
+                    const body = await (result as Response).json();
+                    if (!body?.data?.create_tweet?.tweet_results?.result) {
+                        console.error("Error sending tweet; Bad response:", body);
+                        return;
+                    }
+                    const tweetResult = body.data.create_tweet.tweet_results.result;
+
+                    const tweet = {
+                        id: tweetResult.rest_id,
+                        name: this.client.profile.screenName,
+                        username: this.client.profile.username,
+                        text: tweetResult.legacy.full_text,
+                        conversationId: tweetResult.legacy.conversation_id_str,
+                        createdAt: tweetResult.legacy.created_at,
+                        timestamp: new Date(tweetResult.legacy.created_at).getTime(),
+                        userId: this.client.profile.id,
+                        permanentUrl: `https://twitter.com/${this.runtime.getSetting("TWITTER_USERNAME")}/status/${tweetResult.rest_id}`,
+                        hashtags: [],
+                        mentions: [],
+                        photos: [],
+                        thread: [],
+                        urls: [],
+                        videos: [],
+                    } as Tweet;
+
+                    await this.runtime.cacheManager.set(
+                        `twitter/${this.client.profile.username}/lastPost`,
+                        {
+                            id: tweet.id,
+                            timestamp: Date.now(),
+                        }
+                    );
+
+                    await this.client.cacheTweet(tweet);
+
+                    await this.runtime.ensureRoomExists(roomId);
+                    await this.runtime.ensureParticipantInRoom(
+                        this.runtime.agentId,
+                        roomId
+                    );
+
+                    await this.runtime.messageManager.createMemory({
+                        id: stringToUuid(tweet.id + "-" + this.runtime.agentId),
+                        userId: this.runtime.agentId,
+                        agentId: this.runtime.agentId,
+                        content: {
+                            text: newTweetContent.trim(),
+                            url: tweet.permanentUrl,
+                            source: "twitter",
+                        },
+                        roomId,
+                        embedding: getEmbeddingZeroVector(),
+                        createdAt: tweet.timestamp,
+                    });
+                }
             } catch (error) {
                 elizaLogger.error("Error sending tweet:", error);
             }

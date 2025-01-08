@@ -1,4 +1,4 @@
-# @ai16z/eliza v0.1.5-alpha.3
+# @ai16z/eliza v0.1.5-alpha.5
 
 ## Enumerations
 
@@ -8,6 +8,7 @@
 - [Clients](enumerations/Clients.md)
 - [ServiceType](enumerations/ServiceType.md)
 - [LoggingLevel](enumerations/LoggingLevel.md)
+- [TranscriptionProvider](enumerations/TranscriptionProvider.md)
 
 ## Classes
 

@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.5-alpha.3](../index.md) / Service
+[@ai16z/eliza v0.1.5-alpha.5](../index.md) / Service
 
 # Class: `abstract` Service
 
@@ -36,7 +36,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:957](https://github.com/monilpat/eliza/blob/main/packages/core/src/types.ts#L957)
+[packages/core/src/types.ts:959](https://github.com/fomoTon/eliza/blob/main/packages/core/src/types.ts#L959)
 
 ***
 
@@ -52,7 +52,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:968](https://github.com/monilpat/eliza/blob/main/packages/core/src/types.ts#L968)
+[packages/core/src/types.ts:970](https://github.com/fomoTon/eliza/blob/main/packages/core/src/types.ts#L970)
 
 ## Methods
 
@@ -70,7 +70,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:961](https://github.com/monilpat/eliza/blob/main/packages/core/src/types.ts#L961)
+[packages/core/src/types.ts:963](https://github.com/fomoTon/eliza/blob/main/packages/core/src/types.ts#L963)
 
 ***
 
@@ -90,4 +90,4 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:973](https://github.com/monilpat/eliza/blob/main/packages/core/src/types.ts#L973)
+[packages/core/src/types.ts:975](https://github.com/fomoTon/eliza/blob/main/packages/core/src/types.ts#L975)

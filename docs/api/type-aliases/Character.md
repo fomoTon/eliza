@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.5-alpha.3](../index.md) / Character
+[@ai16z/eliza v0.1.5-alpha.5](../index.md) / Character
 
 # Type Alias: Character
 
@@ -266,6 +266,10 @@ New structured ElevenLabs config
 
 > `optional` **solana**: `any`[]
 
+### settings.transcription?
+
+> `optional` **transcription**: `string`
+
 ### clientConfig?
 
 > `optional` **clientConfig**: `object`
@@ -342,4 +346,4 @@ Optional Twitter profile
 
 ## Defined in
 
-[packages/core/src/types.ts:609](https://github.com/monilpat/eliza/blob/main/packages/core/src/types.ts#L609)
+[packages/core/src/types.ts:610](https://github.com/fomoTon/eliza/blob/main/packages/core/src/types.ts#L610)
